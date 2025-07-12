@@ -1,0 +1,43 @@
+require('dotenv').config();
+const express = require('express');
+const { InteractionType, InteractionResponseType, verifyKeyMiddleware } = require('discord-interactions');
+
+const app = express();
+app.use(express.json());
+
+// Quantum Finance Module
+class QuantumFinance {
+  static processInvestment(amount) {
+    const quantumFluctuation = 1 + (Math.random() * 0.3 - 0.15);
+    return (amount * quantumFluctuation).toFixed(2);
+  }
+}
+
+// Discord Interaction Handler
+app.post('/', verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), (req, res) => {
+  const interaction = req.body;
+
+  if (interaction.type === InteractionType.PING) {
+    return res.json({ type: InteractionResponseType.PONG });
+  }
+
+  if (interaction.type === InteractionType.APPLICATION_COMMAND) {
+    const { name, options } = interaction.data;
+    
+    if (name === 'invest') {
+      const amount = options[0].value;
+      const result = QuantumFinance.processInvestment(amount);
+      return res.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { 
+          content: `💎 **Quantum AI** transformed $${amount} → **$${result}**` 
+        }
+      });
+    }
+  }
+
+  return res.status(400).json({ error: 'Unknown command' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Quantum bot running on port ${PORT}`));
